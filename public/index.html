@@ -4,7 +4,7 @@
     <script src="/js/libs/jquery-2.1.4.min.js"></script>
 </head>
 <body>
-<img id="image" style="width: auto"/>
+<img id="image" style="width: auto; float: right"/>
 <button id="gett">GET IMAGE</button>
 <script>
     $('#gett').click(function () {
@@ -36,12 +36,23 @@
                 };
 
                 xhr.addEventListener("load", function(){
-                    data.splice(0,1);
-                    console.log(data);
-                    console.log(data.length);
+                    //data.splice(0,1);
+                    //console.log(data);
+                    //console.log(data.length);
 
                     var url = (window.URL || window.webkitURL).createObjectURL(new Blob(data));
-                    document.body.style.backgroundImage = 'url(' + url + ')';
+
+                    var i = data.length;
+                    var binaryString = new Array(i);
+                    while (i--)
+                    {
+                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
+                    }
+                    var d = binaryString.join('');
+
+                    var base64 = window.btoa(d);
+
+                    document.getElementById("image").src="data:image/png;base64,"+base64;
 
                 });
 

@@ -11,12 +11,12 @@ app.use(cookieParser());
 
 
 app.get('/image',function(req, res){
-  var stats = fs.statSync(__dirname + '/images/default.jpg');
+  var stats = fs.statSync(__dirname + '/images/default1.jpg');
   var fileSize = stats["size"];
 
   res.set('Content-Length',fileSize);
   var counter = 0;
-  fs.createReadStream(__dirname + '/images/default.jpg')
+  fs.createReadStream(__dirname + '/images/default1.jpg')
       .on('data',function(data){
         counter += 1;
         console.log(counter);
