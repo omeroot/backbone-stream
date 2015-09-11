@@ -1,0 +1,58 @@
+<html>
+<head>
+    <div id="pers">Loading</div>
+    <script src="/js/libs/jquery-2.1.4.min.js"></script>
+</head>
+<body>
+<img id="image" style="width: auto"/>
+<button id="gett">GET IMAGE</button>
+<script>
+    $('#gett').click(function () {
+        $.ajax({
+            method: "GET",
+            url: "/image",
+            error: function (xhr, ajaxOpts, thrownError) {
+                console.log("MYERROR", thrownError);
+            },
+            xhr: function () {
+                var xhr = new window.XMLHttpRequest();
+                var data = []
+                xhr.addEventListener("progress", function (evt) {
+                    if (evt.lengthComputable) {
+                        var pers = evt.loaded / evt.total;
+                        console.log(Math.round(pers * 100) + '%');
+                        $('#pers').html("Loading " + Math.round(pers * 100) + '%');
+                    } else {
+                        console.log("else");
+                    }
+                }, false);
+
+                xhr.onreadystatechange = function(){
+                    if(xhr.readyState > 2){
+                        data.push(xhr.responseText);
+                        xhr.seenBytes = xhr.responseText.length;
+                        //console.log(data);
+                    }
+                };
+
+                xhr.addEventListener("load", function(){
+                    data.splice(0,1);
+                    console.log(data);
+                    console.log(data.length);
+
+                    var url = (window.URL || window.webkitURL).createObjectURL(new Blob(data));
+                    document.body.style.backgroundImage = 'url(' + url + ')';
+
+                });
+
+                return xhr;
+            },
+            success: function (data, responseText, jqXHR) {
+                $('#pers').html("DONE!");
+                //console.log(responseText);
+            }
+        })
+    });
+</script>
+</body>
+</html>
