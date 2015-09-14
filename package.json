@@ -21,6 +21,7 @@
     "socket.io-client" : "*",
     "jsonwebtoken" : "*",
     "jade" : "*",
-    "lowdb" : "*"
+    "lowdb" : "*",
+    "base64-stream" : "*"
   }
 }

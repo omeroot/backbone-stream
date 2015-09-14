@@ -2,11 +2,110 @@
 <head>
     <div id="pers">Loading</div>
     <script src="/js/libs/jquery-2.1.4.min.js"></script>
+    <script src="/js/libs/audio5.js"></script>
+    <script src="/js/libs/underscore-min.js"></script>
 </head>
 <body>
-<img id="image" style="width: auto; float: right"/>
 <button id="gett">GET IMAGE</button>
+<button id="ajax-transport">GET IMAGE AJAX TRANSPORT</button>
+<button id="play">play</button>
+<button id="pause">pause</button>
+<h4 id="time"></h4><h4 id="duration"></h4>
+<a href="/player">go to built-in player</a>
+<img id="image" style="min-width: 50%; min-height: 50%"/>
+
 <script>
+    function initAudio() {
+        $.ajax({
+            url: "/player/info",
+            method: "GET",
+            dataType: 'json',
+            success: function (data, responseText, jqXHR) {
+                console.log(jqXHR.responseText);
+                //$('#duration').innerHTML = "00:00";
+                console.log(document.getElementById('duration'));
+                document.getElementById('duration').innerHTML = data.duration;
+            },
+            error: function(a,b,errorThrown){
+                console.log(errorThrown);
+            }
+        });
+
+        var audio5js = new Audio5js({
+            ready: function (player) {
+                this.load('/player');
+                var play = document.getElementById('play');
+                var pause = document.getElementById('pause');
+                var time = document.getElementById('time');
+                this.on('timeupdate', function (position, duration) {
+                    time.innerHTML = position;
+                }, this);
+
+                play.addEventListener('click', _.bind(function () {
+                    this.play();
+                }, this));
+
+                pause.addEventListener('click', _.bind(function () {
+                    this.pause();
+                }, this));
+            }
+        });
+    }
+    initAudio();
+</script>
+
+<script>
+
+    $.ajaxTransport("image", function (s) {
+        if (s.method == "GET" && s.async) {
+            var image;
+            return {
+                send: function (_, callback) {
+                    function done(status) {
+                        image = new Image();
+                        if (image) {
+                            var statusText = (status === 200) ? "success" : "error";
+                            var tmp = image;
+
+                            image = image.onreadystatechange = image.onload = image.onerror = null;
+                            callback(status, statusText, {image: tmp});
+                        }
+                    }
+
+                    image.onreadystatechange = image.onload = function () {
+                        done(200)
+                    };
+
+                    image.onerror = function () {
+                        done(404)
+                    };
+
+                    image.src = s.url;
+
+                },
+                abort: function () {
+                    if (image)
+                        image = image.onreadystatechange = image.onload = image.onerror = null;
+
+                }
+            };
+        }
+    });
+
+    $('#ajax-transport').click(function () {
+        $.ajax({
+            url: "/image",
+            method: "GET",
+            dataType: "image",
+            success: function (data, responseText, jqXHR) {
+                $('#pers').html("DONE!");
+            },
+            error: function (x, a, thrownError) {
+                console.log("MYERROR", thrownError);
+            }
+        });
+    });
+
     $('#gett').click(function () {
         $.ajax({
             method: "GET",
@@ -16,7 +115,9 @@
             },
             xhr: function () {
                 var xhr = new window.XMLHttpRequest();
-                var data = []
+                var data = [];
+                xhr.responseType = 'blob';
+
                 xhr.addEventListener("progress", function (evt) {
                     if (evt.lengthComputable) {
                         var pers = evt.loaded / evt.total;
@@ -27,33 +128,17 @@
                     }
                 }, false);
 
-                xhr.onreadystatechange = function(){
-                    if(xhr.readyState > 2){
-                        data.push(xhr.responseText);
-                        xhr.seenBytes = xhr.responseText.length;
-                        //console.log(data);
-                    }
+                xhr.onreadystatechange = function () {
+                    //data.push(xhr.responseText);
                 };
 
-                xhr.addEventListener("load", function(){
-                    //data.splice(0,1);
+                xhr.addEventListener("load", function () {
+
+                    var url = window.URL || window.webkitURL;
+                    var obs_url = url.createObjectURL(this.response);
+                    var img = document.getElementById('image');
+                    img.src = obs_url;
                     //console.log(data);
-                    //console.log(data.length);
-
-                    var url = (window.URL || window.webkitURL).createObjectURL(new Blob(data));
-
-                    var i = data.length;
-                    var binaryString = new Array(i);
-                    while (i--)
-                    {
-                        binaryString[i] = String.fromCharCode(uInt8Array[i]);
-                    }
-                    var d = binaryString.join('');
-
-                    var base64 = window.btoa(d);
-
-                    document.getElementById("image").src="data:image/png;base64,"+base64;
-
                 });
 
                 return xhr;
@@ -64,6 +149,7 @@
             }
         })
     });
+
 </script>
 </body>
 </html>
